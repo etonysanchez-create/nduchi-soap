@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build Your Order — Nduchi</title>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Cormorant+Garamond:ital,wght@0,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blush: #F7C5D0; --sky: #C5DEF7; --mint: #C5F7E0;
+    --butter: #F7F0C5; --lavender: #DCC5F7; --peach: #F7DCC5;
+    --white: #FDFCFB; --soft-gray: #F2EEE9; --border: #E8E0D8;
+    --text: #2C2420; --text-light: #8C7B74; --accent: #E8A0B0;
+    --dark: #1E1612;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { font-family:'DM Sans',sans-serif; background:var(--soft-gray); color:var(--text); min-height:100vh; }
+
+  /* ── PAGE HEADER ── */
+  .page-header {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .brand { font-family:'Dancing Script',cursive; font-weight:700; font-size:2.4rem; color:var(--text); text-decoration:none; }
+  .header-sub { font-size:0.82rem; color:var(--text-light); font-weight:300; }
+
+  /* ── LAYOUT ── */
+  .page-body {
+    max-width: 960px;
+    margin: 2.5rem auto;
+    padding: 0 1.5rem 4rem;
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--white);
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 1.4rem 1.8rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-title {
+    font-family:'Dancing Script',cursive; font-weight:700;
+    font-size: 1.8rem;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .card-body { padding: 1.8rem; }
+
+  /* ── SOAP ITEM IN ORDER ── */
+  .soap-items { display:flex; flex-direction:column; gap:1rem; }
+
+  .soap-item {
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .soap-item.building { border-color: var(--accent); }
+
+  .soap-item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.2rem;
+    background: var(--soft-gray);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .soap-item-header:hover { background: #EDE7E0; }
+
+  .soap-item-left { display:flex; align-items:center; gap:0.75rem; }
+
+  .soap-number {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--white);
+    font-size: 0.78rem;
+    font-weight: 600;
+    display: flex; align-items:center; justify-content:center;
+    flex-shrink: 0;
+  }
+
+  .soap-item-title {
+    font-weight: 600;
+    font-size: 0.92rem;
+    color: var(--text);
+  }
+
+  .soap-item-preview {
+    font-size: 0.78rem;
+    color: var(--text-light);
+    font-weight: 300;
+    margin-top: 0.15rem;
+  }
+
+  .soap-item-actions { display:flex; align-items:center; gap:0.5rem; }
+
+  .btn-icon {
+    width:30px; height:30px; border-radius:50%;
+    border: 1.5px solid var(--border);
+    background: var(--white);
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    font-size:0.85rem;
+    transition: all 0.2s;
+    color: var(--text-light);
+  }
+
+  .btn-icon:hover { border-color:var(--accent); color:var(--accent); background:var(--blush); }
+  .btn-icon.delete:hover { border-color:#e05555; color:#e05555; background:#fde8e8; }
+
+  .chevron { transition:transform 0.2s; font-size:0.7rem; color:var(--text-light); }
+  .soap-item.open .chevron { transform:rotate(180deg); }
+
+  /* ── SOAP CONFIG BODY ── */
+  .soap-config {
+    display: none;
+    padding: 1.4rem;
+    border-top: 1px solid var(--border);
+    flex-direction: column;
+    gap: 1.4rem;
+  }
+
+  .soap-item.open .soap-config { display:flex; }
+
+  .field-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-light);
+    margin-bottom: 0.6rem;
+  }
+
+  .field-required::after { content:" *"; color:var(--accent); }
+
+  /* CHIP OPTIONS */
+  .chip-group { display:flex; flex-wrap:wrap; gap:0.4rem; }
+
+  .chip {
+    padding: 0.4rem 0.9rem;
+    border-radius: 100px;
+    border: 1.5px solid var(--border);
+    background: var(--white);
+    color: var(--text-light);
+    font-size: 0.82rem;
+    font-family:'DM Sans',sans-serif;
+    cursor: pointer;
+    transition: all 0.18s;
+    font-weight: 400;
+  }
+
+  .chip:hover { border-color:var(--accent); color:var(--text); }
+  .chip.selected { background:var(--accent); border-color:var(--accent); color:var(--white); font-weight:500; }
+
+  /* COLOR SWATCHES */
+  .swatch-group { display:flex; flex-wrap:wrap; gap:0.5rem; align-items:center; }
+
+  .swatch {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 2.5px solid transparent;
+    cursor: pointer;
+    transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s;
+    position: relative;
+  }
+
+  .swatch:hover { transform:scale(1.15); }
+
+  .swatch.selected {
+    border-color: var(--text);
+    box-shadow: 0 0 0 2px var(--white), 0 0 0 4px var(--text);
+    transform: scale(1.1);
+  }
+
+  .swatch[data-name="White"] { border-color: var(--border); }
+  .swatch[data-name="White"].selected { border-color: var(--text); }
+
+  .swatch-tooltip {
+    position:absolute; bottom:calc(100% + 6px); left:50%;
+    transform:translateX(-50%);
+    background:var(--text); color:var(--white);
+    font-size:0.68rem; padding:0.25rem 0.5rem; border-radius:6px;
+    white-space:nowrap; opacity:0; pointer-events:none;
+    transition:opacity 0.15s;
+  }
+
+  .swatch:hover .swatch-tooltip { opacity:1; }
+
+  .color-selected-list {
+    font-size:0.8rem; color:var(--text-light);
+    margin-top:0.5rem; font-weight:300;
+    min-height:1.2rem;
+  }
+
+  /* QTY STEPPER */
+  .qty-stepper {
+    display:flex; align-items:center; gap:0.75rem;
+  }
+
+  .qty-btn {
+    width:32px; height:32px; border-radius:50%;
+    border:1.5px solid var(--border);
+    background:var(--white);
+    font-size:1.1rem; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:all 0.18s;
+    color:var(--text);
+    font-family:'DM Sans',sans-serif;
+  }
+
+  .qty-btn:hover { border-color:var(--accent); background:var(--blush); }
+
+  .qty-display {
+    font-size:1.1rem; font-weight:600; min-width:1.5rem; text-align:center;
+  }
+
+  /* NOTES */
+  .notes-field {
+    width:100%;
+    padding: 0.75rem 1rem;
+    border-radius:12px;
+    border:1.5px solid var(--border);
+    font-family:'DM Sans',sans-serif;
+    font-size:0.88rem;
+    color:var(--text);
+    background:var(--white);
+    resize:vertical;
+    min-height:70px;
+    transition:border-color 0.2s;
+    outline:none;
+  }
+
+  .notes-field:focus { border-color:var(--accent); }
+  .notes-field::placeholder { color:var(--text-light); }
+
+  /* VALIDATION */
+  .field-error { font-size:0.75rem; color:#d94f4f; margin-top:0.35rem; display:none; }
+  .field-error.show { display:block; }
+
+  /* ADD SOAP BTN */
+  .btn-add-soap {
+    width:100%;
+    padding:0.9rem;
+    border-radius:14px;
+    border:2px dashed var(--border);
+    background:transparent;
+    font-family:'DM Sans',sans-serif;
+    font-size:0.88rem;
+    color:var(--text-light);
+    cursor:pointer;
+    transition:all 0.2s;
+    display:flex; align-items:center; justify-content:center; gap:0.5rem;
+    margin-top:0.5rem;
+  }
+
+  .btn-add-soap:hover { border-color:var(--accent); color:var(--accent); background:var(--blush); }
+
+  /* ── CONTACT CARD ── */
+  .input-field {
+    width:100%;
+    padding:0.75rem 1rem;
+    border-radius:12px;
+    border:1.5px solid var(--border);
+    font-family:'DM Sans',sans-serif;
+    font-size:0.88rem;
+    color:var(--text);
+    background:var(--white);
+    transition:border-color 0.2s;
+    outline:none;
+    margin-bottom:0.25rem;
+  }
+
+  .input-field:focus { border-color:var(--accent); }
+  .input-field::placeholder { color:var(--text-light); }
+
+  .field-group { margin-bottom:1.1rem; }
+
+  /* ── STICKY SUMMARY ── */
+  .summary-card {
+    position: sticky;
+    top: 1.5rem;
+  }
+
+  .summary-soap {
+    border-radius:12px;
+    padding:1rem;
+    margin-bottom:0.75rem;
+    position:relative;
+  }
+
+  .summary-soap-name {
+    font-weight:600;
+    font-size:0.88rem;
+    margin-bottom:0.3rem;
+    display:flex; align-items:center; gap:0.4rem;
+  }
+
+  .summary-soap-detail {
+    font-size:0.78rem;
+    color:var(--text-light);
+    line-height:1.6;
+    font-weight:300;
+  }
+
+  .summary-empty {
+    text-align:center;
+    padding:2rem 1rem;
+    color:var(--text-light);
+    font-size:0.85rem;
+    font-weight:300;
+  }
+
+  .summary-empty-icon { font-size:2rem; margin-bottom:0.5rem; }
+
+  .summary-divider {
+    border:none;
+    border-top:1px solid var(--border);
+    margin:1rem 0;
+  }
+
+  .summary-total-row {
+    display:flex;
+    justify-content:space-between;
+    font-size:0.82rem;
+    color:var(--text-light);
+    margin-bottom:0.4rem;
+  }
+
+  .summary-total-row.main {
+    font-weight:600;
+    font-size:0.92rem;
+    color:var(--text);
+  }
+
+  /* ── SUBMIT ── */
+  .btn-submit {
+    width:100%;
+    padding:1rem;
+    border-radius:14px;
+    border:none;
+    background:var(--text);
+    color:var(--white);
+    font-family:'DM Sans',sans-serif;
+    font-size:0.95rem;
+    font-weight:500;
+    cursor:pointer;
+    transition:transform 0.2s, box-shadow 0.2s, background 0.2s;
+    margin-top:1rem;
+  }
+
+  .btn-submit:hover { background:var(--accent); transform:translateY(-1px); box-shadow:0 6px 20px rgba(232,160,176,0.4); }
+
+  .submit-note {
+    font-size:0.75rem;
+    color:var(--text-light);
+    text-align:center;
+    margin-top:0.6rem;
+    font-weight:300;
+  }
+
+  /* ── SUCCESS STATE ── */
+  .success-screen {
+    display:none;
+    text-align:center;
+    padding:3rem 2rem;
+  }
+
+  .success-screen.show { display:block; }
+  .success-icon { font-size:3.5rem; margin-bottom:1rem; }
+  .success-title { font-family:'Dancing Script',cursive; font-weight:700; font-size:2.5rem; margin-bottom:0.5rem; color:var(--text); }
+  .success-desc { font-size:0.9rem; color:var(--text-light); line-height:1.6; font-weight:300; }
+
+  /* ── PROGRESS DOTS ── */
+  .progress-bar {
+    display:flex; align-items:center; gap:0.5rem;
+    padding:1rem 1.8rem;
+    border-bottom:1px solid var(--border);
+  }
+
+  .prog-label { font-size:0.75rem; color:var(--text-light); font-weight:500; }
+  .prog-dot { width:6px; height:6px; border-radius:50%; background:var(--border); }
+  .prog-dot.done { background:var(--accent); }
+
+  /* COLOR BADGE */
+  .color-badge {
+    display:inline-block;
+    width:10px; height:10px;
+    border-radius:50%;
+    border:1px solid rgba(0,0,0,0.1);
+    margin-right:2px;
+    vertical-align:middle;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="page-header">
+  <a href="#" class="brand">Nduchi</a>
+  <span class="header-sub">Custom Soap Builder</span>
+</div>
+
+<!-- BODY -->
+<div class="page-body">
+
+  <!-- LEFT COLUMN -->
+  <div>
+
+    <!-- CONTACT CARD -->
+    <div class="card" id="contact-card" style="margin-bottom:1.5rem">
+      <div class="card-header">
+        <span class="card-title">Your Details</span>
+      </div>
+      <div class="card-body">
+        <div class="field-group">
+          <div class="field-label field-required">Full Name</div>
+          <input class="input-field" id="contact-name" type="text" placeholder="e.g. Jane Smith">
+          <div class="field-error" id="err-name">Please enter your name</div>
+        </div>
+        <div class="field-group">
+          <div class="field-label field-required">Email Address</div>
+          <input class="input-field" id="contact-email" type="email" placeholder="you@example.com">
+          <div class="field-error" id="err-email">Please enter a valid email</div>
+        </div>
+        <div class="field-group">
+          <div class="field-label">Phone Number <span style="color:var(--text-light);font-weight:300;text-transform:none;letter-spacing:0">(optional)</span></div>
+          <input class="input-field" id="contact-phone" type="tel" placeholder="e.g. (214) 555-0123">
+        </div>
+        <div class="field-group">
+          <div class="field-label field-required">When do you need your soaps?</div>
+          <input class="input-field" id="contact-date" type="date">
+          <div style="font-size:0.75rem;color:var(--text-light);margin-top:0.35rem;font-weight:300">This helps us plan your order — please allow enough time for handcrafting.</div>
+          <div class="field-error" id="err-date">Please select a date</div>
+        </div>
+        <div class="field-group">
+          <div class="field-label field-required">Preferred contact method</div>
+          <div style="display:flex;gap:0.75rem;margin-top:0.2rem">
+            <button type="button" class="chip" id="contact-pref-email" onclick="selectContactPref('Email')">📧 Email</button>
+            <button type="button" class="chip" id="contact-pref-phone" onclick="selectContactPref('Phone')">📞 Phone</button>
+          </div>
+          <div class="field-error" id="err-contact-pref">Please select a preferred contact method</div>
+        </div>
+        <div class="field-group" style="margin-bottom:0">
+          <div class="field-label">Additional Notes <span style="color:var(--text-light);font-weight:300;text-transform:none;letter-spacing:0">(optional)</span></div>
+          <textarea class="notes-field" id="contact-notes" placeholder="Any special requests, gift messages, delivery notes..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- SOAP BUILDER CARD -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Your Soaps</span>
+        <span style="font-size:0.8rem;color:var(--text-light)">Build each soap individually</span>
+      </div>
+      <div class="card-body">
+        <div class="soap-items" id="soap-items"></div>
+        <button class="btn-add-soap" id="add-soap-btn" onclick="addSoap()">
+          <span style="font-size:1.1rem">＋</span> Add another soap
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT COLUMN — STICKY SUMMARY -->
+  <div class="summary-card">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Order Summary</span>
+      </div>
+      <div class="card-body" id="summary-body">
+        <div class="summary-empty" id="summary-empty">
+          <div class="summary-empty-icon">🧼</div>
+          <div>Your soaps will appear here as you build them</div>
+        </div>
+        <div id="summary-soaps"></div>
+      </div>
+
+      <!-- SUCCESS -->
+      <div class="success-screen" id="success-screen">
+        <div class="success-icon">🎉</div>
+        <div class="success-title">Order Received!</div>
+        <div class="success-desc">Thanks for your order! We'll email you within 24 hours with pricing and next steps.</div>
+      </div>
+
+      <div style="padding:0 1.8rem 1.8rem" id="submit-area">
+        <hr class="summary-divider">
+        <div class="summary-total-row">
+          <span>Total items</span>
+          <span id="total-soaps">0</span>
+        </div>
+        <button class="btn-submit" onclick="submitOrder()">Request a Quote →</button>
+        <div class="submit-note">We'll respond within 24 hours with pricing</div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ═══════════════════════════════════════════
+   DATA
+═══════════════════════════════════════════ */
+const MOLDS = [
+  { emoji:"🐾", name:"Puppy" },
+  { emoji:"👼", name:"Angel" },
+  { emoji:"🕊️", name:"Dove" },
+  { emoji:"🌹", name:"Rose" },
+  { emoji:"🌸", name:"Flowers" },
+  { emoji:"🍇", name:"Grape Cluster", desc:"A bunch of individual soap grapes — each 'grape' is a small soap, arranged to look like a real grape cluster. One of our most popular!" },
+];
+
+const COLORS = [
+  { name:"Red",    hex:"#E8595A" },
+  { name:"Blue",   hex:"#5B9BD5" },
+  { name:"Pink",   hex:"#F4A7B9" },
+  { name:"White",  hex:"#FDFCFB" },
+  { name:"Black",  hex:"#2C2420" },
+  { name:"Purple", hex:"#C3A6D4" },
+  { name:"Mint",   hex:"#A8D5BA" },
+  { name:"Yellow", hex:"#F7D08A" },
+  { name:"Orange", hex:"#F7A87A" },
+];
+
+const FRAGRANCES = [
+  { emoji:"🍂", name:"Cinnamon" },
+  { emoji:"💜", name:"Lavender" },
+  { emoji:"🍉", name:"Watermelon" },
+  { emoji:"🍦", name:"Vanilla" },
+  { emoji:"🌿", name:"Lemongrass" },
+  { emoji:"🌹", name:"Rose" },
+  { emoji:"🍋", name:"Lemon" },
+  { emoji:"🌊", name:"Ocean Breeze" },
+  { emoji:"🤍", name:"Unscented" },
+];
+
+const PASTELS = ['#F7C5D0','#C5DEF7','#C5F7E0','#F7F0C5','#DCC5F7','#F7DCC5'];
+
+/* ═══════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════ */
+let soaps = [];   // array of { id, mold, colors, fragrance, qty, notes }
+let nextId = 1;
+
+/* ═══════════════════════════════════════════
+   ADD / REMOVE SOAPS
+═══════════════════════════════════════════ */
+function addSoap() {
+  const id = nextId++;
+  soaps.push({ id, mold:null, colors:[], finish:null, fragrance:null, qty:1, notes:'' });
+  renderSoaps();
+  // Auto-open the new soap
+  setTimeout(() => openSoap(id), 50);
+}
+
+function removeSoap(id) {
+  soaps = soaps.filter(s => s.id !== id);
+  renderSoaps();
+  updateSummary();
+}
+
+function openSoap(id) {
+  const el = document.getElementById(`soap-${id}`);
+  if (el) {
+    el.classList.add('open');
+    el.classList.add('building');
+  }
+}
+
+function toggleSoap(id) {
+  const el = document.getElementById(`soap-${id}`);
+  if (el) el.classList.toggle('open');
+}
+
+/* ═══════════════════════════════════════════
+   RENDER SOAPS
+═══════════════════════════════════════════ */
+function renderSoaps() {
+  const container = document.getElementById('soap-items');
+  container.innerHTML = soaps.map((soap, idx) => buildSoapHTML(soap, idx)).join('');
+  updateSummary();
+}
+
+function buildSoapHTML(soap, idx) {
+  const pastel = PASTELS[idx % PASTELS.length];
+  const preview = getSoapPreview(soap);
+  const isComplete = isSoapComplete(soap);
+
+  return `
+  <div class="soap-item ${isComplete ? '' : 'building'}" id="soap-${soap.id}">
+    <div class="soap-item-header" onclick="toggleSoap(${soap.id})">
+      <div class="soap-item-left">
+        <div class="soap-number" style="background:${pastel};color:#2C2420">${idx+1}</div>
+        <div>
+          <div class="soap-item-title">${soap.mold ? soap.mold.emoji + ' ' + soap.mold.name + ' Bar' : 'New Soap'}</div>
+          <div class="soap-item-preview">${preview}</div>
+        </div>
+      </div>
+      <div class="soap-item-actions">
+        ${isComplete ? '<span style="font-size:0.75rem;color:#4CAF50;font-weight:500">✓ Ready</span>' : '<span style="font-size:0.75rem;color:var(--accent);font-weight:500">Building...</span>'}
+        <button class="btn-icon delete" onclick="event.stopPropagation();removeSoap(${soap.id})" title="Remove">✕</button>
+        <span class="chevron">▼</span>
+      </div>
+    </div>
+
+    <div class="soap-config">
+
+      <!-- MOLD -->
+      <div>
+        <div class="field-label field-required">Mold Shape</div>
+        <div class="chip-group">
+          ${MOLDS.map(m => `
+            <button class="chip ${soap.mold && soap.mold.name===m.name ? 'selected' : ''}"
+              onclick="selectMold(${soap.id},'${m.name}','${m.emoji}')">
+              ${m.emoji} ${m.name}
+            </button>`).join('')}
+        </div>
+        ${soap.mold && soap.mold.desc ? `<div style="font-size:0.78rem;color:var(--text-light);margin-top:0.5rem;font-weight:300;line-height:1.5;background:var(--butter);padding:0.6rem 0.8rem;border-radius:10px">ℹ️ ${soap.mold.desc}</div>` : ''}
+      </div>
+
+      <!-- FINISH -->
+      <div>
+        <div class="field-label field-required">Finish / Style</div>
+        <div class="chip-group">
+          <button class="chip ${soap.finish==='Solid' ? 'selected' : ''}" onclick="selectFinish(${soap.id},'Solid')">🟦 Solid</button>
+          ${soap.mold && soap.mold.name === 'Grape Cluster' ? '' : `<button class="chip ${soap.finish==='Marbled' ? 'selected' : ''}" onclick="selectFinish(${soap.id},'Marbled')">🪨 Marbled</button>`}
+        </div>
+        <div style="font-size:0.78rem;color:var(--text-light);margin-top:0.5rem;font-weight:300;line-height:1.5">
+          ${soap.mold && soap.mold.name === 'Grape Cluster' ? '🍇 Grape Cluster is only available in Solid color.' : ''}
+          ${soap.finish === 'Solid' && !(soap.mold && soap.mold.name === 'Grape Cluster') ? '🟦 One clean, even color throughout. Choose a single color below.' : ''}
+          ${soap.finish === 'Marbled' ? '🪨 Colors blended to create a natural stone-like marble effect. Choose up to 3 colors — only your last 3 selections will be used.' : ''}
+          ${!soap.finish && !(soap.mold && soap.mold.name === 'Grape Cluster') ? 'Choose how your colors will be applied to the soap.' : ''}
+        </div>
+      </div>
+
+      <!-- COLORS -->
+      <div>
+        <div class="field-label field-required">
+          ${soap.finish === 'Solid' ? 'Color — choose one' : soap.finish === 'Marbled' ? 'Colors — choose up to 3' : 'Color(s)'}
+        </div>
+        <div class="swatch-group">
+          ${COLORS.map(c => {
+            const isSelected = soap.colors.includes(c.name);
+            return `
+            <div class="swatch ${isSelected ? 'selected' : ''}"
+              style="background:${c.hex}"
+              data-name="${c.name}"
+              onclick="toggleColor(${soap.id},'${c.name}')"
+              title="${c.name}">
+              <span class="swatch-tooltip">${c.name}</span>
+            </div>`;
+          }).join('')}
+        </div>
+        <div class="color-selected-list" id="colors-${soap.id}">
+          ${soap.colors.length ? 'Selected: ' + soap.colors.join(', ') : soap.finish === 'Solid' ? 'Pick one color' : soap.finish === 'Marbled' ? 'Pick up to 3 colors' : 'No colors selected yet'}
+        </div>
+      </div>
+
+      <!-- FRAGRANCE -->
+      <div>
+        <div class="field-label field-required">Fragrance</div>
+        <div class="chip-group">
+          ${FRAGRANCES.map(f => `
+            <button class="chip ${soap.fragrance && soap.fragrance.name===f.name ? 'selected' : ''}"
+              onclick="selectFragrance(${soap.id},'${f.name}','${f.emoji}')">
+              ${f.emoji} ${f.name}
+            </button>`).join('')}
+        </div>
+      </div>
+
+      <!-- QUANTITY -->
+      <div>
+        <div class="field-label">How many of this soap?</div>
+        <div class="qty-stepper">
+          <button class="qty-btn" onclick="changeQty(${soap.id},-1)">−</button>
+          <span class="qty-display" id="qty-${soap.id}">${soap.qty}</span>
+          <button class="qty-btn" onclick="changeQty(${soap.id},1)">＋</button>
+          <span style="font-size:0.82rem;color:var(--text-light);font-weight:300">bar${soap.qty !== 1 ? 's' : ''}</span>
+        </div>
+      </div>
+
+      <!-- SOAP NOTES -->
+      <div>
+        <div class="field-label">Notes for this soap <span style="color:var(--text-light);font-weight:300;text-transform:none;letter-spacing:0">(optional)</span></div>
+        <textarea class="notes-field" style="min-height:55px" placeholder="e.g. swirled, layered, specific shade preference..."
+          oninput="updateSoapNotes(${soap.id}, this.value)">${soap.notes}</textarea>
+      </div>
+
+    </div>
+  </div>`;
+}
+
+function getSoapPreview(soap) {
+  if (!soap.mold && !soap.colors.length && !soap.fragrance) return 'Tap to configure';
+  const parts = [];
+  if (soap.fragrance) parts.push(soap.fragrance.emoji + ' ' + soap.fragrance.name);
+  if (soap.finish) parts.push(soap.finish);
+  if (soap.colors.length) parts.push(soap.colors.join(' & '));
+  if (soap.qty > 1) parts.push(`×${soap.qty}`);
+  return parts.join(' · ') || 'In progress...';
+}
+
+function isSoapComplete(soap) {
+  return soap.mold && soap.colors.length > 0 && soap.finish && soap.fragrance;
+}
+
+/* ═══════════════════════════════════════════
+   SOAP INTERACTIONS
+═══════════════════════════════════════════ */
+function selectMold(id, name, emoji) {
+  const soap = soaps.find(s => s.id === id);
+  if (soap) {
+    const moldData = MOLDS.find(m => m.name === name);
+    soap.mold = { name, emoji, desc: moldData?.desc || null };
+    // Grape Cluster only supports Solid — auto-select it and reset colors
+    if (name === 'Grape Cluster') {
+      soap.finish = 'Solid';
+      soap.colors = [];
+    } else if (soap.finish === 'Marbled' && name === 'Grape Cluster') {
+      soap.colors = [];
+    }
+    renderSoaps(); openSoap(id); updateSummary();
+  }
+}
+
+function toggleColor(id, colorName) {
+  const soap = soaps.find(s => s.id === id);
+  if (!soap) return;
+  if (soap.finish === 'Solid') {
+    // Solid: always just replace with the latest pick — no locking, no deselecting
+    soap.colors = [colorName];
+  } else {
+    // Marbled: toggle on/off, max 3 — if already at 3, drop oldest and add new
+    if (soap.colors.includes(colorName)) {
+      soap.colors = soap.colors.filter(c => c !== colorName);
+    } else {
+      soap.colors = [...soap.colors, colorName].slice(-3);
+    }
+  }
+  renderSoaps(); openSoap(id); updateSummary();
+}
+
+function selectFragrance(id, name, emoji) {
+  const soap = soaps.find(s => s.id === id);
+  if (soap) { soap.fragrance = { name, emoji }; renderSoaps(); openSoap(id); updateSummary(); }
+}
+
+let contactPref = null;
+function selectContactPref(pref) {
+  contactPref = pref;
+  document.getElementById('contact-pref-email').classList.toggle('selected', pref === 'Email');
+  document.getElementById('contact-pref-phone').classList.toggle('selected', pref === 'Phone');
+  document.getElementById('err-contact-pref').classList.remove('show');
+}
+
+function selectFinish(id, finish) {
+  const soap = soaps.find(s => s.id === id);
+  if (!soap) return;
+  // If switching finish type, reset colors to avoid invalid state
+  if (soap.finish !== finish) soap.colors = [];
+  soap.finish = finish;
+  renderSoaps(); openSoap(id); updateSummary();
+}
+
+function changeQty(id, delta) {
+  const soap = soaps.find(s => s.id === id);
+  if (soap) {
+    soap.qty = Math.max(1, soap.qty + delta);
+    document.getElementById(`qty-${id}`).textContent = soap.qty;
+    updateSummary();
+  }
+}
+
+function updateSoapNotes(id, val) {
+  const soap = soaps.find(s => s.id === id);
+  if (soap) soap.notes = val;
+}
+
+/* ═══════════════════════════════════════════
+   SUMMARY
+═══════════════════════════════════════════ */
+function updateSummary() {
+  const empty = document.getElementById('summary-empty');
+  const summaryEl = document.getElementById('summary-soaps');
+  const totalSoapsEl = document.getElementById('total-soaps');
+  const totalBarsEl = document.getElementById('total-bars');
+
+  if (soaps.length === 0) {
+    empty.style.display = 'block';
+    summaryEl.innerHTML = '';
+    totalSoapsEl.textContent = '0';
+    totalBarsEl.textContent = '0';
+    return;
+  }
+
+  empty.style.display = 'none';
+
+  let totalBars = 0;
+  summaryEl.innerHTML = soaps.map((soap, idx) => {
+    totalBars += soap.qty;
+    const pastel = PASTELS[idx % PASTELS.length];
+    const colorDots = soap.colors.map(c => {
+      const col = COLORS.find(x => x.name === c);
+      return col ? `<span class="color-badge" style="background:${col.hex}"></span>` : '';
+    }).join('');
+
+    return `
+    <div class="summary-soap" style="background:${pastel}22;border:1px solid ${pastel}">
+      <div class="summary-soap-name">
+        <span>${soap.mold ? soap.mold.emoji : '❓'}</span>
+        <span>${soap.mold ? soap.mold.name + ' Bar' : 'Unnamed soap'}</span>
+        <span style="margin-left:auto;font-size:0.75rem;font-weight:400;color:var(--text-light)">×${soap.qty}</span>
+      </div>
+      <div class="summary-soap-detail">
+        ${soap.colors.length ? `${colorDots} ${soap.colors.join(', ')}` : '<span style="color:#ccc">No color</span>'}
+        ${soap.finish ? ` · ${soap.finish}` : ''}
+        ${soap.fragrance ? ` · ${soap.fragrance.emoji} ${soap.fragrance.name}` : ''}
+        ${soap.notes ? `<br><span style="font-style:italic">"${soap.notes}"</span>` : ''}
+      </div>
+      ${!isSoapComplete(soap) ? `<div style="font-size:0.72rem;color:var(--accent);margin-top:0.3rem;font-weight:500">⚠ Incomplete</div>` : ''}
+    </div>`;
+  }).join('');
+
+  totalSoapsEl.textContent = soaps.reduce((sum, s) => sum + s.qty, 0);
+
+  // Show needed-by date in summary if set
+  const date = document.getElementById('contact-date')?.value;
+  let dateRow = document.getElementById('summary-date-row');
+  if (date) {
+    const formatted = new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday:'short', month:'long', day:'numeric', year:'numeric' });
+    if (!dateRow) {
+      const divider = document.querySelector('#submit-area .summary-divider');
+      const row = document.createElement('div');
+      row.id = 'summary-date-row';
+      row.className = 'summary-total-row';
+      row.innerHTML = `<span>📅 Needed by</span><span style="font-weight:500">${formatted}</span>`;
+      divider.after(row);
+    } else {
+      const formatted2 = new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday:'short', month:'long', day:'numeric', year:'numeric' });
+      dateRow.innerHTML = `<span>📅 Needed by</span><span style="font-weight:500">${formatted2}</span>`;
+    }
+  } else if (dateRow) {
+    dateRow.remove();
+  }
+}
+
+/* ═══════════════════════════════════════════
+   SUBMIT
+═══════════════════════════════════════════ */
+function submitOrder() {
+  let valid = true;
+
+  // Validate contact
+  const name = document.getElementById('contact-name').value.trim();
+  const email = document.getElementById('contact-email').value.trim();
+  const phone = document.getElementById('contact-phone').value.trim();
+  const date = document.getElementById('contact-date').value;
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  document.getElementById('err-name').classList.toggle('show', !name);
+  document.getElementById('err-email').classList.toggle('show', !emailOk);
+  document.getElementById('err-date').classList.toggle('show', !date);
+  document.getElementById('err-contact-pref').classList.toggle('show', !contactPref);
+
+  if (!name || !emailOk || !date || !contactPref) { valid = false; document.getElementById('contact-card').scrollIntoView({behavior:'smooth'}); }
+
+  // Validate soaps
+  if (soaps.length === 0) {
+    alert('Please add at least one soap to your order! 🧼');
+    return;
+  }
+
+  const incomplete = soaps.filter(s => !isSoapComplete(s));
+  if (incomplete.length > 0) {
+    alert(`You have ${incomplete.length} soap${incomplete.length > 1 ? 's' : ''} that still need${incomplete.length === 1 ? 's' : ''} a mold, color, and fragrance. Please complete them before submitting.`);
+    // Open first incomplete soap
+    openSoap(incomplete[0].id);
+    document.getElementById(`soap-${incomplete[0].id}`).scrollIntoView({behavior:'smooth'});
+    return;
+  }
+
+  if (!valid) return;
+
+  // Build summary string for alert
+  const orderLines = soaps.map((s,i) =>
+    `  Soap ${i+1}: ${s.mold.emoji} ${s.mold.name} · ${s.colors.join('+')} · ${s.fragrance.emoji} ${s.fragrance.name} ×${s.qty}`
+  ).join('\n');
+
+  // Show success
+  document.getElementById('submit-area').style.display = 'none';
+  document.getElementById('summary-body').style.display = 'none';
+  document.getElementById('success-screen').classList.add('show');
+
+  // Scroll to summary
+  document.querySelector('.summary-card').scrollIntoView({behavior:'smooth'});
+
+  console.log('ORDER SUBMITTED', { name, email, phone, date, contactPref, soaps });
+}
+
+/* ═══════════════════════════════════════════
+   INIT — start with one soap ready to build
+═══════════════════════════════════════════ */
+// Set minimum date to today
+const today = new Date().toISOString().split('T')[0];
+document.getElementById('contact-date').setAttribute('min', today);
+document.getElementById('contact-date').addEventListener('change', updateSummary);
+
+addSoap();
+</script>
+</body>
+</html>
