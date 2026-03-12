@@ -640,7 +640,15 @@ function buildSoapHTML(soap, idx) {
               onclick="selectMold(${soap.id},'${m.name}','${m.emoji}')">
               ${m.emoji} ${m.name}
             </button>`).join('')}
+          <button class="chip ${soap.mold && soap.mold.name==='Other' ? 'selected' : ''}"
+            onclick="selectMold(${soap.id},'Other','✏️')">
+            ✏️ Other
+          </button>
         </div>
+        ${soap.mold && soap.mold.name === 'Other' ? `
+          <input class="input-field" style="margin-top:0.6rem" placeholder="Describe your custom mold shape..."
+            value="${soap.moldCustom || ''}"
+            oninput="updateCustomField(${soap.id},'moldCustom',this.value)">` : ''}
         ${soap.mold && soap.mold.desc ? `<div style="font-size:0.78rem;color:var(--text-light);margin-top:0.5rem;font-weight:300;line-height:1.5;background:var(--butter);padding:0.6rem 0.8rem;border-radius:10px">ℹ️ ${soap.mold.desc}</div>` : ''}
       </div>
 
@@ -676,7 +684,16 @@ function buildSoapHTML(soap, idx) {
               <span class="swatch-tooltip">${c.name}</span>
             </div>`;
           }).join('')}
+          <div class="swatch ${soap.colors.includes('Other') ? 'selected' : ''}"
+            style="background:linear-gradient(135deg,#f7c5d0,#c5def7,#c5f7e0,#f7f0c5);border:2px dashed rgba(0,0,0,0.2)"
+            title="Other" onclick="toggleColor(${soap.id},'Other')">
+            <span class="swatch-tooltip">Other</span>
+          </div>
         </div>
+        ${soap.colors.includes('Other') ? `
+          <input class="input-field" style="margin-top:0.6rem" placeholder="Describe your custom color(s)..."
+            value="${soap.colorCustom || ''}"
+            oninput="updateCustomField(${soap.id},'colorCustom',this.value)">` : ''}
         <div class="color-selected-list" id="colors-${soap.id}">
           ${soap.colors.length ? 'Selected: ' + soap.colors.join(', ') : soap.finish === 'Solid' ? 'Pick one color' : soap.finish === 'Marbled' ? 'Pick up to 3 colors' : 'No colors selected yet'}
         </div>
@@ -691,7 +708,15 @@ function buildSoapHTML(soap, idx) {
               onclick="selectFragrance(${soap.id},'${f.name}','${f.emoji}')">
               ${f.emoji} ${f.name}
             </button>`).join('')}
+          <button class="chip ${soap.fragrance && soap.fragrance.name==='Other' ? 'selected' : ''}"
+            onclick="selectFragrance(${soap.id},'Other','✏️')">
+            ✏️ Other
+          </button>
         </div>
+        ${soap.fragrance && soap.fragrance.name === 'Other' ? `
+          <input class="input-field" style="margin-top:0.6rem" placeholder="Describe your custom fragrance..."
+            value="${soap.fragranceCustom || ''}"
+            oninput="updateCustomField(${soap.id},'fragranceCustom',this.value)">` : ''}
       </div>
 
       <!-- QUANTITY -->
@@ -797,6 +822,11 @@ function changeQty(id, delta) {
   }
 }
 
+function updateCustomField(id, field, val) {
+  const soap = soaps.find(s => s.id === id);
+  if (soap) soap[field] = val;
+}
+
 function updateSoapNotes(id, val) {
   const soap = soaps.find(s => s.id === id);
   if (soap) soap.notes = val;
@@ -873,14 +903,14 @@ function updateSummary() {
 /* ═══════════════════════════════════════════
    SUBMIT
 ═══════════════════════════════════════════ */
-function submitOrder() {
+async function submitOrder() {
   let valid = true;
 
-  // Validate contact
   const name = document.getElementById('contact-name').value.trim();
   const email = document.getElementById('contact-email').value.trim();
   const phone = document.getElementById('contact-phone').value.trim();
   const date = document.getElementById('contact-date').value;
+  const notes = document.getElementById('contact-notes').value.trim();
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   document.getElementById('err-name').classList.toggle('show', !name);
@@ -888,9 +918,11 @@ function submitOrder() {
   document.getElementById('err-date').classList.toggle('show', !date);
   document.getElementById('err-contact-pref').classList.toggle('show', !contactPref);
 
-  if (!name || !emailOk || !date || !contactPref) { valid = false; document.getElementById('contact-card').scrollIntoView({behavior:'smooth'}); }
+  if (!name || !emailOk || !date || !contactPref) {
+    valid = false;
+    document.getElementById('contact-card').scrollIntoView({behavior:'smooth'});
+  }
 
-  // Validate soaps
   if (soaps.length === 0) {
     alert('Please add at least one soap to your order! 🧼');
     return;
@@ -899,7 +931,6 @@ function submitOrder() {
   const incomplete = soaps.filter(s => !isSoapComplete(s));
   if (incomplete.length > 0) {
     alert(`You have ${incomplete.length} soap${incomplete.length > 1 ? 's' : ''} that still need${incomplete.length === 1 ? 's' : ''} a mold, color, and fragrance. Please complete them before submitting.`);
-    // Open first incomplete soap
     openSoap(incomplete[0].id);
     document.getElementById(`soap-${incomplete[0].id}`).scrollIntoView({behavior:'smooth'});
     return;
@@ -907,20 +938,42 @@ function submitOrder() {
 
   if (!valid) return;
 
-  // Build summary string for alert
-  const orderLines = soaps.map((s,i) =>
-    `  Soap ${i+1}: ${s.mold.emoji} ${s.mold.name} · ${s.colors.join('+')} · ${s.fragrance.emoji} ${s.fragrance.name} ×${s.qty}`
-  ).join('\n');
+  // Build readable order summary for email
+  const orderSummary = soaps.map((s, i) => {
+    const mold = s.mold.name === 'Other' ? `Other: ${s.moldCustom || 'not specified'}` : `${s.mold.emoji} ${s.mold.name}`;
+    const colors = s.colors.map(c => c === 'Other' ? `Other: ${s.colorCustom || 'not specified'}` : c).join(', ');
+    const fragrance = s.fragrance.name === 'Other' ? `Other: ${s.fragranceCustom || 'not specified'}` : `${s.fragrance.emoji} ${s.fragrance.name}`;
+    return `Soap ${i+1}: ${mold} | ${s.finish} | ${colors} | ${fragrance} | Qty: ${s.qty}${s.notes ? ` | Note: "${s.notes}"` : ''}`;
+  }).join('\n');
 
-  // Show success
-  document.getElementById('submit-area').style.display = 'none';
-  document.getElementById('summary-body').style.display = 'none';
-  document.getElementById('success-screen').classList.add('show');
+  // Submit to Formspree
+  try {
+    const res = await fetch('https://formspree.io/f/xgonyzov', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        'Customer Name': name,
+        'Email': email,
+        'Phone': phone || 'Not provided',
+        'Needed By': date,
+        'Preferred Contact': contactPref,
+        'Additional Notes': notes || 'None',
+        'Order Summary': orderSummary,
+        'Total Items': soaps.reduce((sum, s) => sum + s.qty, 0),
+      })
+    });
 
-  // Scroll to summary
-  document.querySelector('.summary-card').scrollIntoView({behavior:'smooth'});
-
-  console.log('ORDER SUBMITTED', { name, email, phone, date, contactPref, soaps });
+    if (res.ok) {
+      document.getElementById('submit-area').style.display = 'none';
+      document.getElementById('summary-body').style.display = 'none';
+      document.getElementById('success-screen').classList.add('show');
+      document.querySelector('.summary-card').scrollIntoView({behavior:'smooth'});
+    } else {
+      alert('Something went wrong submitting your order. Please try again or contact us directly.');
+    }
+  } catch(err) {
+    alert('Network error. Please check your connection and try again.');
+  }
 }
 
 /* ═══════════════════════════════════════════
